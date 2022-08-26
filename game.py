@@ -11,6 +11,16 @@ UP_KEY_CODE = 259
 DOWN_KEY_CODE = 258
 
 
+def get_frame_size(text):
+    """Calculate size of multiline text fragment,
+    return pair — number of rows and colums."""
+
+    lines = text.splitlines()
+    rows = len(lines)
+    columns = max([len(line) for line in lines])
+    return rows, columns
+
+
 def read_controls(canvas):
     """Read keys pressed and returns tuple witl controls state."""
 
@@ -146,14 +156,18 @@ def draw(canvas):
     canvas.border()
     canvas.nodelay(True)
     max_row, max_column = canvas.getmaxyx()
-    max_row -= 2
-    max_column -= 2
+    max_row -= 1
+    max_column -= 1
 
     rocket_frames = []
     with open('frames/rocket_frame_1.txt', 'r') as frame_file:
         rocket_frames.append(frame_file.read())
     with open('frames/rocket_frame_2.txt', 'r') as frame_file:
         rocket_frames.append(frame_file.read())
+
+    rocket_rows, rocket_columns = get_frame_size(rocket_frames[0])
+    max_rocket_row = max_row - rocket_rows
+    max_rocket_column = max_column - rocket_columns
 
     rocket_start_row = max_row // 2 - 4
     rocket_start_column = max_column // 2 - 2
@@ -171,8 +185,8 @@ def draw(canvas):
 
     coroutines = []
     for __ in range(stars_number):
-        row = random.randint(1, max_row)
-        column = random.randint(1, max_column)
+        row = random.randint(1, max_row - 1)
+        column = random.randint(1, max_column - 1)
         symbol = random.choice('+*.:')
         coroutines.append(blink(canvas, row, column, symbol))
 
@@ -192,7 +206,7 @@ def draw(canvas):
 
         rows_direction, columns_direction, __ = read_controls(canvas)
         time.sleep(0.1)
-        if rows_direction != 0 or columns_direction != 0:
+        if rows_direction or columns_direction:
             coroutines.remove(rocket_coroutine)
             for rocket_frame in rocket_frames:
                 draw_frame(
@@ -201,8 +215,22 @@ def draw(canvas):
                     rocket_start_column,
                     rocket_frame, True
                 )
+
             rocket_start_row += rows_direction
             rocket_start_column += columns_direction
+
+            if rocket_start_row < 1:
+                rocket_start_row = 1
+
+            if rocket_start_row > max_rocket_row:
+                rocket_start_row = max_rocket_row
+
+            if rocket_start_column < 1:
+                rocket_start_column = 1
+
+            if rocket_start_column > max_rocket_column:
+                rocket_start_column = max_rocket_column
+
             rocket_coroutine = animate_spaceship(
                 canvas,
                 rocket_start_row,
