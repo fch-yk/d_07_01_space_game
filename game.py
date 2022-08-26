@@ -1,7 +1,54 @@
 import asyncio
 import curses
+import itertools
 import random
 import time
+
+
+def draw_frame(canvas, start_row, start_column, text, negative=False):
+    """Draw multiline text fragment on canvas, erase text instead of drawing
+    if negative=True is specified."""
+
+    rows_number, columns_number = canvas.getmaxyx()
+
+    for row, line in enumerate(text.splitlines(), round(start_row)):
+        if row < 0:
+            continue
+
+        if row >= rows_number:
+            break
+
+        for column, symbol in enumerate(line, round(start_column)):
+            if column < 0:
+                continue
+
+            if column >= columns_number:
+                break
+
+            if symbol == ' ':
+                continue
+
+            # Check that current position it is not in a lower right corner of
+            # the window
+            # Curses will raise exception in that case. Don`t ask why…
+            # https://docs.python.org/3/library/curses.html#curses.window.addch
+            if row == rows_number - 1 and column == columns_number - 1:
+                continue
+
+            symbol = symbol if not negative else ' '
+            canvas.addch(row, column, symbol)
+
+
+async def animate_spaceship(canvas, max_row, max_column, rocket_frames):
+    start_row = max_row // 2 - 4
+    start_column = max_column // 2 - 2
+    for rocket_frame in itertools.cycle(rocket_frames):
+        draw_frame(canvas, start_row, start_column, rocket_frame)
+        canvas.refresh()
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+        draw_frame(canvas, start_row, start_column, rocket_frame, True)
+        canvas.refresh()
 
 
 async def fire(
@@ -60,17 +107,32 @@ async def blink(canvas, row, column, symbol='*'):
 
 
 def draw(canvas):
-    row = 5
-    canvas.border()
     curses.curs_set(False)
+    canvas.border()
     max_row, max_column = canvas.getmaxyx()
-    max_symbols = max_row * max_column
-    min_stars_number = max_symbols // 30
-    max_stars_number = max_symbols // 20
-    stars_number = random.randint(min_stars_number, max_stars_number)
     max_row -= 2
     max_column -= 2
+
+    rocket_frames = []
+    with open('frames/rocket_frame_1.txt', 'r') as frame_file:
+        rocket_frames.append(frame_file.read())
+    with open('frames/rocket_frame_2.txt', 'r') as frame_file:
+        rocket_frames.append(frame_file.read())
+
+    max_symbols = max_row * max_column
+    min_stars_number = max_symbols // 70
+    max_stars_number = max_symbols // 60
+    stars_number = random.randint(min_stars_number, max_stars_number)
+
     coroutines = []
+    coroutines.append(
+        animate_spaceship(
+            canvas,
+            max_row,
+            max_column,
+            rocket_frames
+        )
+    )
     coroutines.append(fire(canvas, max_row // 2, max_column // 2, -1))
     for __ in range(stars_number):
         row = random.randint(1, max_row)
