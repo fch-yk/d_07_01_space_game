@@ -4,6 +4,43 @@ import itertools
 import random
 import time
 
+SPACE_KEY_CODE = 32
+LEFT_KEY_CODE = 260
+RIGHT_KEY_CODE = 261
+UP_KEY_CODE = 259
+DOWN_KEY_CODE = 258
+
+
+def read_controls(canvas):
+    """Read keys pressed and returns tuple witl controls state."""
+
+    rows_direction = columns_direction = 0
+    space_pressed = False
+
+    while True:
+        pressed_key_code = canvas.getch()
+
+        if pressed_key_code == -1:
+            # https://docs.python.org/3/library/curses.html#curses.window.getch
+            break
+
+        if pressed_key_code == UP_KEY_CODE:
+            rows_direction = -1
+
+        if pressed_key_code == DOWN_KEY_CODE:
+            rows_direction = 1
+
+        if pressed_key_code == RIGHT_KEY_CODE:
+            columns_direction = 1
+
+        if pressed_key_code == LEFT_KEY_CODE:
+            columns_direction = -1
+
+        if pressed_key_code == SPACE_KEY_CODE:
+            space_pressed = True
+
+    return rows_direction, columns_direction, space_pressed
+
 
 def draw_frame(canvas, start_row, start_column, text, negative=False):
     """Draw multiline text fragment on canvas, erase text instead of drawing
@@ -39,9 +76,7 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
             canvas.addch(row, column, symbol)
 
 
-async def animate_spaceship(canvas, max_row, max_column, rocket_frames):
-    start_row = max_row // 2 - 4
-    start_column = max_column // 2 - 2
+async def animate_spaceship(canvas, start_row, start_column, rocket_frames):
     for rocket_frame in itertools.cycle(rocket_frames):
         draw_frame(canvas, start_row, start_column, rocket_frame)
         canvas.refresh()
@@ -109,6 +144,7 @@ async def blink(canvas, row, column, symbol='*'):
 def draw(canvas):
     curses.curs_set(False)
     canvas.border()
+    canvas.nodelay(True)
     max_row, max_column = canvas.getmaxyx()
     max_row -= 2
     max_column -= 2
@@ -119,26 +155,29 @@ def draw(canvas):
     with open('frames/rocket_frame_2.txt', 'r') as frame_file:
         rocket_frames.append(frame_file.read())
 
+    rocket_start_row = max_row // 2 - 4
+    rocket_start_column = max_column // 2 - 2
+    rocket_coroutine = animate_spaceship(
+        canvas,
+        rocket_start_row,
+        rocket_start_column,
+        rocket_frames
+    )
+
     max_symbols = max_row * max_column
     min_stars_number = max_symbols // 70
     max_stars_number = max_symbols // 60
     stars_number = random.randint(min_stars_number, max_stars_number)
 
     coroutines = []
-    coroutines.append(
-        animate_spaceship(
-            canvas,
-            max_row,
-            max_column,
-            rocket_frames
-        )
-    )
-    coroutines.append(fire(canvas, max_row // 2, max_column // 2, -1))
     for __ in range(stars_number):
         row = random.randint(1, max_row)
         column = random.randint(1, max_column)
         symbol = random.choice('+*.:')
         coroutines.append(blink(canvas, row, column, symbol))
+
+    coroutines.append(rocket_coroutine)
+    coroutines.append(fire(canvas, max_row // 2, max_column // 2, -1))
 
     while True:
         for coroutine in coroutines.copy():
@@ -148,8 +187,29 @@ def draw(canvas):
                 coroutines.remove(coroutine)
         if len(coroutines) == 0:
             break
+
         canvas.refresh()
+
+        rows_direction, columns_direction, __ = read_controls(canvas)
         time.sleep(0.1)
+        if rows_direction != 0 or columns_direction != 0:
+            coroutines.remove(rocket_coroutine)
+            for rocket_frame in rocket_frames:
+                draw_frame(
+                    canvas,
+                    rocket_start_row,
+                    rocket_start_column,
+                    rocket_frame, True
+                )
+            rocket_start_row += rows_direction
+            rocket_start_column += columns_direction
+            rocket_coroutine = animate_spaceship(
+                canvas,
+                rocket_start_row,
+                rocket_start_column,
+                rocket_frames
+            )
+            coroutines.append(rocket_coroutine)
 
 
 if __name__ == '__main__':
