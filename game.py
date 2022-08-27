@@ -89,11 +89,9 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
 async def animate_spaceship(canvas, start_row, start_column, rocket_frames):
     for rocket_frame in itertools.cycle(rocket_frames):
         draw_frame(canvas, start_row, start_column, rocket_frame)
-        canvas.refresh()
         await asyncio.sleep(0)
         await asyncio.sleep(0)
         draw_frame(canvas, start_row, start_column, rocket_frame, True)
-        canvas.refresh()
 
 
 async def fire(
