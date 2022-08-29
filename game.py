@@ -1,6 +1,7 @@
 import asyncio
 import curses
 import itertools
+import os
 import random
 import time
 
@@ -161,10 +162,12 @@ def draw(canvas):
     max_column = canvas_width - 1
 
     rocket_frames = []
-    with open('frames/rocket_frame_1.txt', 'r') as frame_file:
-        rocket_frames.append(frame_file.read())
-    with open('frames/rocket_frame_2.txt', 'r') as frame_file:
-        rocket_frames.append(frame_file.read())
+    frames_folder_name = 'frames'
+    files_names = os.listdir(frames_folder_name)
+    for file_name in files_names:
+        file_path = os.path.join(frames_folder_name, file_name)
+        with open(file_path, 'r') as frame_file:
+            rocket_frames.append(frame_file.read())
 
     rocket_rows, rocket_columns = get_frame_size(rocket_frames[0])
     max_rocket_row = max_row - rocket_rows
