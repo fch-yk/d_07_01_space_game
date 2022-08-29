@@ -153,9 +153,12 @@ def draw(canvas):
     curses.curs_set(False)
     canvas.border()
     canvas.nodelay(True)
-    max_row, max_column = canvas.getmaxyx()
-    max_row -= 1
-    max_column -= 1
+
+    '''Method getmaxyx returns height and width:
+    https://docs.python.org/2/library/curses.html#curses.window.getmaxyx)'''
+    canvas_height, canvas_width = canvas.getmaxyx()
+    max_row = canvas_height - 1
+    max_column = canvas_width - 1
 
     rocket_frames = []
     with open('frames/rocket_frame_1.txt', 'r') as frame_file:
