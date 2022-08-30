@@ -88,12 +88,34 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
             canvas.addch(row, column, symbol)
 
 
-async def animate_spaceship(canvas, start_row, start_column, rocket_frames):
+async def animate_spaceship(
+        canvas,
+        start_row,
+        start_column,
+        max_row,
+        max_column,
+        rocket_frames):
+    rocket_rows, rocket_columns = get_frame_size(rocket_frames[0])
+    max_rocket_row = max_row - rocket_rows
+    max_rocket_column = max_column - rocket_columns
+
     for rocket_frame in itertools.cycle(rocket_frames):
         draw_frame(canvas, start_row, start_column, rocket_frame)
-        await asyncio.sleep(0)
+        rows_direction, columns_direction, __ = read_controls(canvas)
         await asyncio.sleep(0)
         draw_frame(canvas, start_row, start_column, rocket_frame, True)
+
+        if rows_direction or columns_direction:
+            start_row += rows_direction
+            start_column += columns_direction
+            if start_row < 1:
+                start_row = 1
+            if start_row > max_rocket_row:
+                start_row = max_rocket_row
+            if start_column < 1:
+                start_column = 1
+            if start_column > max_rocket_column:
+                start_column = max_rocket_column
 
 
 async def fire(
@@ -168,23 +190,13 @@ def draw(canvas):
     for file_name in files_names:
         file_path = os.path.join(frames_folder_name, file_name)
         with open(file_path, 'r') as frame_file:
-            rocket_frames.append(frame_file.read())
-
-    rocket_rows, rocket_columns = get_frame_size(rocket_frames[0])
-    max_rocket_row = max_row - rocket_rows
-    max_rocket_column = max_column - rocket_columns
+            frame = frame_file.read()
+            for __ in range(2):
+                rocket_frames.append(frame)
 
     first_row = first_column = 0
     central_row = int(statistics.mean([first_row, max_row]))
     central_column = int(statistics.mean([first_column, max_column]))
-    rocket_start_row = central_row
-    rocket_start_column = central_column
-    rocket_coroutine = animate_spaceship(
-        canvas,
-        rocket_start_row,
-        rocket_start_column,
-        rocket_frames
-    )
 
     max_symbols = max_row * max_column
     min_stars_ratio = 0.02
@@ -204,7 +216,16 @@ def draw(canvas):
         symbol = random.choice('+*.:')
         coroutines.append(blink(canvas, row, column, symbol))
 
-    coroutines.append(rocket_coroutine)
+    coroutines.append(
+        animate_spaceship(
+            canvas,
+            central_row,
+            central_column,
+            max_row,
+            max_column,
+            rocket_frames
+        )
+    )
     coroutines.append(fire(canvas, central_row, central_column, -1))
 
     while True:
@@ -215,41 +236,7 @@ def draw(canvas):
                 coroutines.remove(coroutine)
 
         canvas.refresh()
-
-        rows_direction, columns_direction, __ = read_controls(canvas)
         time.sleep(0.1)
-        if rows_direction or columns_direction:
-            coroutines.remove(rocket_coroutine)
-            for rocket_frame in rocket_frames:
-                draw_frame(
-                    canvas,
-                    rocket_start_row,
-                    rocket_start_column,
-                    rocket_frame, True
-                )
-
-            rocket_start_row += rows_direction
-            rocket_start_column += columns_direction
-
-            if rocket_start_row < 1:
-                rocket_start_row = 1
-
-            if rocket_start_row > max_rocket_row:
-                rocket_start_row = max_rocket_row
-
-            if rocket_start_column < 1:
-                rocket_start_column = 1
-
-            if rocket_start_column > max_rocket_column:
-                rocket_start_column = max_rocket_column
-
-            rocket_coroutine = animate_spaceship(
-                canvas,
-                rocket_start_row,
-                rocket_start_column,
-                rocket_frames
-            )
-            coroutines.append(rocket_coroutine)
 
 
 if __name__ == '__main__':
