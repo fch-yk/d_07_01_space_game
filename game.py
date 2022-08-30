@@ -3,6 +3,7 @@ import curses
 import itertools
 import os
 import random
+import statistics
 import time
 
 SPACE_KEY_CODE = 32
@@ -173,8 +174,11 @@ def draw(canvas):
     max_rocket_row = max_row - rocket_rows
     max_rocket_column = max_column - rocket_columns
 
-    rocket_start_row = max_row // 2 - 4
-    rocket_start_column = max_column // 2 - 2
+    first_row = first_column = 0
+    central_row = int(statistics.mean([first_row, max_row]))
+    central_column = int(statistics.mean([first_column, max_column]))
+    rocket_start_row = central_row
+    rocket_start_column = central_column
     rocket_coroutine = animate_spaceship(
         canvas,
         rocket_start_row,
@@ -183,19 +187,25 @@ def draw(canvas):
     )
 
     max_symbols = max_row * max_column
-    min_stars_number = max_symbols // 70
-    max_stars_number = max_symbols // 60
-    stars_number = random.randint(min_stars_number, max_stars_number)
+    min_stars_ratio = 0.02
+    max_stars_ratio = 0.04
+    stars_number = random.randint(
+        int(max_symbols * min_stars_ratio),
+        int(max_symbols * max_stars_ratio)
+    )
 
     coroutines = []
+    min_game_area_row = min_game_area_column = 1
+    max_game_area_row = max_row - 1
+    max_game_area_column = max_column - 1
     for __ in range(stars_number):
-        row = random.randint(1, max_row - 1)
-        column = random.randint(1, max_column - 1)
+        row = random.randint(min_game_area_row, max_game_area_row)
+        column = random.randint(min_game_area_column, max_game_area_column)
         symbol = random.choice('+*.:')
         coroutines.append(blink(canvas, row, column, symbol))
 
     coroutines.append(rocket_coroutine)
-    coroutines.append(fire(canvas, max_row // 2, max_column // 2, -1))
+    coroutines.append(fire(canvas, central_row, central_column, -1))
 
     while True:
         for coroutine in coroutines.copy():
