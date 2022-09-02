@@ -105,17 +105,16 @@ async def animate_spaceship(
         await asyncio.sleep(0)
         draw_frame(canvas, start_row, start_column, rocket_frame, True)
 
-        if rows_direction or columns_direction:
-            start_row += rows_direction
-            start_column += columns_direction
-            if start_row < 1:
-                start_row = 1
-            if start_row > max_rocket_row:
-                start_row = max_rocket_row
-            if start_column < 1:
-                start_column = 1
-            if start_column > max_rocket_column:
-                start_column = max_rocket_column
+        start_row += rows_direction
+        start_column += columns_direction
+        start_row = (
+            max(start_row, 1) if rows_direction < 0
+            else min(start_row, max_rocket_row)
+        )
+        start_column = (
+            max(start_column, 1) if columns_direction < 0
+            else min(start_column, max_rocket_column)
+        )
 
 
 async def fire(
