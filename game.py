@@ -101,8 +101,8 @@ async def animate_spaceship(
 
     for rocket_frame in itertools.cycle(rocket_frames):
         draw_frame(canvas, start_row, start_column, rocket_frame)
-        rows_direction, columns_direction, __ = read_controls(canvas)
         await asyncio.sleep(0)
+        rows_direction, columns_direction, __ = read_controls(canvas)
         draw_frame(canvas, start_row, start_column, rocket_frame, True)
 
         start_row += rows_direction
