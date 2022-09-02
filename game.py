@@ -153,10 +153,10 @@ async def fire(
         column += columns_speed
 
 
-async def blink(canvas, row, column, blink_interval, symbol='*'):
+async def blink(canvas, row, column, offset_tics, symbol='*'):
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
-        for __ in range(blink_interval):
+        for __ in range(offset_tics):
             await asyncio.sleep(0)
 
         canvas.addstr(row, column, symbol)
@@ -212,10 +212,10 @@ def draw(canvas):
         row = random.randint(min_game_area_row, max_game_area_row)
         column = random.randint(min_game_area_column, max_game_area_column)
         symbol = random.choice('+*.:')
-        min_blink_interval = 20
-        max_blink_interval = 40
-        blink_interval = random.randint(min_blink_interval, max_blink_interval)
-        coroutines.append(blink(canvas, row, column, blink_interval, symbol))
+        min_offset_tics = 20
+        max_offset_tics = 40
+        offset_tics = random.randint(min_offset_tics, max_offset_tics)
+        coroutines.append(blink(canvas, row, column, offset_tics, symbol))
 
     coroutines.append(
         animate_spaceship(
