@@ -13,6 +13,23 @@ UP_KEY_CODE = 259
 DOWN_KEY_CODE = 258
 
 
+async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
+    """Animate garbage, flying from top to bottom.
+    Сolumn position will stay same, as specified on start."""
+    rows_number, columns_number = canvas.getmaxyx()
+
+    column = max(column, 0)
+    column = min(column, columns_number - 1)
+
+    row = 0
+
+    while row < rows_number:
+        draw_frame(canvas, row, column, garbage_frame)
+        await asyncio.sleep(0)
+        draw_frame(canvas, row, column, garbage_frame, negative=True)
+        row += speed
+
+
 def get_frame_size(text):
     """Calculate size of multiline text fragment,
     return pair — number of rows and colums."""
@@ -173,7 +190,6 @@ async def blink(canvas, row, column, offset_tics, symbol='*'):
 
 def draw(canvas):
     curses.curs_set(False)
-    canvas.border()
     canvas.nodelay(True)
 
     '''Method getmaxyx returns height and width:
@@ -183,7 +199,7 @@ def draw(canvas):
     max_column = canvas_width - 1
 
     rocket_frames = []
-    frames_folder_name = 'frames'
+    frames_folder_name = 'frames/rocket'
     files_names = os.listdir(frames_folder_name)
     for file_name in files_names:
         file_path = os.path.join(frames_folder_name, file_name)
@@ -191,6 +207,15 @@ def draw(canvas):
             frame = frame_file.read()
             for __ in range(2):
                 rocket_frames.append(frame)
+
+    trash_frames = []
+    frames_folder_name = 'frames/trash'
+    files_names = os.listdir(frames_folder_name)
+    for file_name in files_names:
+        file_path = os.path.join(frames_folder_name, file_name)
+        with open(file_path, 'r') as frame_file:
+            frame = frame_file.read()
+            trash_frames.append(frame)
 
     first_row = first_column = 0
     central_row = int(statistics.mean([first_row, max_row]))
@@ -228,6 +253,9 @@ def draw(canvas):
         )
     )
     coroutines.append(fire(canvas, central_row, central_column, -1))
+    coroutines.append(
+        fly_garbage(canvas, column=10, garbage_frame=trash_frames[0])
+    )
 
     while True:
         for coroutine in coroutines.copy():
