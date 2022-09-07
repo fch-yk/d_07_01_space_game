@@ -89,14 +89,17 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
             canvas.addch(row, column, symbol)
 
 
+async def sleep(tics=1):
+    for __ in range(tics):
+        await asyncio.sleep(0)
+
+
 async def fill_orbit_with_garbage(canvas, trash_frames, max_column):
     while True:
         column = random.randint(0, max_column)
         frame = random.choice(trash_frames)
         coroutines.append(fly_garbage(canvas, column, frame))
-        tics_number = 10
-        for __ in range(tics_number):
-            await asyncio.sleep(0)
+        await sleep(10)
 
 
 async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
@@ -184,19 +187,16 @@ async def fire(
 async def blink(canvas, row, column, offset_tics, symbol='*'):
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
-        for __ in range(offset_tics):
-            await asyncio.sleep(0)
+        await sleep(offset_tics)
 
         canvas.addstr(row, column, symbol)
-        for __ in range(3):
-            await asyncio.sleep(0)
+        await sleep(3)
 
         canvas.addstr(row, column, symbol, curses.A_BOLD)
-        for __ in range(5):
-            await asyncio.sleep(0)
+        await sleep(5)
+
         canvas.addstr(row, column, symbol)
-        for __ in range(3):
-            await asyncio.sleep(0)
+        await sleep(3)
 
 
 def draw(canvas):
