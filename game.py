@@ -11,23 +11,7 @@ LEFT_KEY_CODE = 260
 RIGHT_KEY_CODE = 261
 UP_KEY_CODE = 259
 DOWN_KEY_CODE = 258
-
-
-async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
-    """Animate garbage, flying from top to bottom.
-    Сolumn position will stay same, as specified on start."""
-    rows_number, columns_number = canvas.getmaxyx()
-
-    column = max(column, 0)
-    column = min(column, columns_number - 1)
-
-    row = 0
-
-    while row < rows_number:
-        draw_frame(canvas, row, column, garbage_frame)
-        await asyncio.sleep(0)
-        draw_frame(canvas, row, column, garbage_frame, negative=True)
-        row += speed
+coroutines = []
 
 
 def get_frame_size(text):
@@ -103,6 +87,33 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
 
             symbol = symbol if not negative else ' '
             canvas.addch(row, column, symbol)
+
+
+async def fill_orbit_with_garbage(canvas, trash_frames, max_column):
+    while True:
+        column = random.randint(0, max_column)
+        frame = random.choice(trash_frames)
+        coroutines.append(fly_garbage(canvas, column, frame))
+        tics_number = 10
+        for __ in range(tics_number):
+            await asyncio.sleep(0)
+
+
+async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
+    """Animate garbage, flying from top to bottom.
+    Сolumn position will stay same, as specified on start."""
+    rows_number, columns_number = canvas.getmaxyx()
+
+    column = max(column, 0)
+    column = min(column, columns_number - 1)
+
+    row = 0
+
+    while row < rows_number:
+        draw_frame(canvas, row, column, garbage_frame)
+        await asyncio.sleep(0)
+        draw_frame(canvas, row, column, garbage_frame, negative=True)
+        row += speed
 
 
 async def animate_spaceship(
@@ -229,7 +240,6 @@ def draw(canvas):
         int(max_symbols * max_stars_ratio)
     )
 
-    coroutines = []
     min_game_area_row = min_game_area_column = 1
     max_game_area_row = max_row - 1
     max_game_area_column = max_column - 1
@@ -254,7 +264,7 @@ def draw(canvas):
     )
     coroutines.append(fire(canvas, central_row, central_column, -1))
     coroutines.append(
-        fly_garbage(canvas, column=10, garbage_frame=trash_frames[0])
+        fill_orbit_with_garbage(canvas, trash_frames, max_column)
     )
 
     while True:
