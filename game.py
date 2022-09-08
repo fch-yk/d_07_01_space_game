@@ -131,13 +131,20 @@ async def animate_spaceship(
     rocket_rows, rocket_columns = get_frame_size(rocket_frames[0])
     max_rocket_row = max_row - rocket_rows
     max_rocket_column = max_column - rocket_columns
+    rocket_central_column = statistics.median(
+        list(range(1, rocket_columns + 1))
+    )
 
     row_speed = column_speed = 0
 
     for rocket_frame in itertools.cycle(rocket_frames):
         draw_frame(canvas, start_row, start_column, rocket_frame)
         await asyncio.sleep(0)
-        rows_direction, columns_direction, __ = read_controls(canvas)
+        rows_direction, columns_direction, space_pressed = read_controls(
+            canvas
+        )
+
+        draw_frame(canvas, start_row, start_column, rocket_frame, True)
 
         row_speed, column_speed = update_speed(
             row_speed,
@@ -147,7 +154,6 @@ async def animate_spaceship(
             row_speed_limit=4,
             column_speed_limit=4
         )
-        draw_frame(canvas, start_row, start_column, rocket_frame, True)
 
         start_row = round(start_row + row_speed)
         start_column = round(start_column + column_speed)
@@ -161,6 +167,10 @@ async def animate_spaceship(
             start_column = max(start_column, 1)
         if start_column > max_rocket_column:
             start_column = min(start_column, max_rocket_column)
+
+        if space_pressed:
+            fire_start_column = start_column + rocket_central_column - 1
+            coroutines.append(fire(canvas, start_row, fire_start_column, -1))
 
 
 async def fire(
@@ -277,7 +287,7 @@ def draw(canvas):
             rocket_frames
         )
     )
-    coroutines.append(fire(canvas, central_row, central_column, -1))
+
     coroutines.append(
         fill_orbit_with_garbage(canvas, trash_frames, max_column)
     )
