@@ -6,6 +6,8 @@ import random
 import statistics
 import time
 
+from physics import update_speed
+
 SPACE_KEY_CODE = 32
 LEFT_KEY_CODE = 260
 RIGHT_KEY_CODE = 261
@@ -130,22 +132,35 @@ async def animate_spaceship(
     max_rocket_row = max_row - rocket_rows
     max_rocket_column = max_column - rocket_columns
 
+    row_speed = column_speed = 0
+
     for rocket_frame in itertools.cycle(rocket_frames):
         draw_frame(canvas, start_row, start_column, rocket_frame)
         await asyncio.sleep(0)
         rows_direction, columns_direction, __ = read_controls(canvas)
+
+        row_speed, column_speed = update_speed(
+            row_speed,
+            column_speed,
+            rows_direction,
+            columns_direction,
+            row_speed_limit=4,
+            column_speed_limit=4
+        )
         draw_frame(canvas, start_row, start_column, rocket_frame, True)
 
-        start_row += rows_direction
-        start_column += columns_direction
-        start_row = (
-            max(start_row, 1) if rows_direction < 0
-            else min(start_row, max_rocket_row)
-        )
-        start_column = (
-            max(start_column, 1) if columns_direction < 0
-            else min(start_column, max_rocket_column)
-        )
+        start_row = round(start_row + row_speed)
+        start_column = round(start_column + column_speed)
+
+        if start_row < 1:
+            start_row = max(start_row, 1)
+        if start_row > max_rocket_row:
+            start_row = min(start_row, max_rocket_row)
+
+        if start_column < 1:
+            start_column = max(start_column, 1)
+        if start_column > max_rocket_column:
+            start_column = min(start_column, max_rocket_column)
 
 
 async def fire(
