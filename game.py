@@ -13,6 +13,7 @@ from obstacles import Obstacle, show_obstacles
 
 coroutines = []
 obstacles: List[Obstacle] = []
+obstacles_in_last_collisions: List[Obstacle] = []
 
 
 async def sleep(tics=1):
@@ -38,7 +39,11 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
     rows_size, columns_size = get_frame_size(garbage_frame)
     row = 0
 
+    obstacle = None
     while row < rows_number:
+        if obstacle in obstacles_in_last_collisions:
+            obstacles_in_last_collisions.remove(obstacle)
+            return
         draw_frame(canvas, row, column, garbage_frame)
         obstacle = Obstacle(row, column, rows_size, columns_size)
         obstacles.append(obstacle)
@@ -136,6 +141,7 @@ async def fire(
         column += columns_speed
         for obstacle in obstacles:
             if obstacle.has_collision(round(row), round(column)):
+                obstacles_in_last_collisions.append(obstacle)
                 return
 
 
@@ -221,7 +227,7 @@ def draw(canvas):
     coroutines.append(
         fill_orbit_with_garbage(canvas, trash_frames, max_column)
     )
-
+    coroutines.append(show_obstacles(canvas, obstacles))
     while True:
         for coroutine in coroutines.copy():
             try:
