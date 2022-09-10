@@ -7,9 +7,10 @@ import statistics
 import time
 from typing import List
 
-from physics import update_speed
-from curses_tools import get_frame_size, read_controls, draw_frame
+from curses_tools import draw_frame, get_frame_size, read_controls
+from explosion import explode
 from obstacles import Obstacle, show_obstacles
+from physics import update_speed
 
 coroutines = []
 obstacles: List[Obstacle] = []
@@ -38,11 +39,14 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
     column = min(column, columns_number - 1)
     rows_size, columns_size = get_frame_size(garbage_frame)
     row = 0
-
+    center_column = round(column + columns_size / 2)
     obstacle = None
+
     while row < rows_number:
         if obstacle in obstacles_in_last_collisions:
             obstacles_in_last_collisions.remove(obstacle)
+            center_row = round(row + rows_size / 2)
+            coroutines.append(explode(canvas, center_row, center_column))
             return
         draw_frame(canvas, row, column, garbage_frame)
         obstacle = Obstacle(row, column, rows_size, columns_size)
@@ -90,15 +94,10 @@ async def animate_spaceship(
         start_row = round(start_row + row_speed)
         start_column = round(start_column + column_speed)
 
-        if start_row < 1:
-            start_row = max(start_row, 1)
-        if start_row > max_rocket_row:
-            start_row = min(start_row, max_rocket_row)
-
-        if start_column < 1:
-            start_column = max(start_column, 1)
-        if start_column > max_rocket_column:
-            start_column = min(start_column, max_rocket_column)
+        start_row = max(start_row, 1)
+        start_row = min(start_row, max_rocket_row)
+        start_column = max(start_column, 1)
+        start_column = min(start_column, max_rocket_column)
 
         if space_pressed:
             fire_start_column = start_column + rocket_central_column - 1
