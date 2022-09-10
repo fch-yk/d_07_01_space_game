@@ -5,13 +5,14 @@ import os
 import random
 import statistics
 import time
+from typing import List
 
 from physics import update_speed
 from curses_tools import get_frame_size, read_controls, draw_frame
 from obstacles import Obstacle, show_obstacles
 
 coroutines = []
-obstacles = []
+obstacles: List[Obstacle] = []
 
 
 async def sleep(tics=1):
@@ -133,6 +134,9 @@ async def fire(
         canvas.addstr(round(row), round(column), ' ')
         row += rows_speed
         column += columns_speed
+        for obstacle in obstacles:
+            if obstacle.has_collision(round(row), round(column)):
+                return
 
 
 async def blink(canvas, row, column, offset_tics, symbol='*'):
@@ -217,8 +221,6 @@ def draw(canvas):
     coroutines.append(
         fill_orbit_with_garbage(canvas, trash_frames, max_column)
     )
-
-    coroutines.append(show_obstacles(canvas, obstacles))
 
     while True:
         for coroutine in coroutines.copy():
