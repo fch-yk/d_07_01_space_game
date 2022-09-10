@@ -17,6 +17,32 @@ obstacles: List[Obstacle] = []
 obstacles_in_last_collisions: List[Obstacle] = []
 
 
+async def show_gameover(canvas):
+    game_over_frame = r'''
+  ____   ____  ___ ___    ___       ___   __ __    ___  ____
+ /    | /    ||   |   |  /  _]     /   \ |  |  |  /  _]|    \
+|   __||  o  || _   _ | /  [_     |     ||  |  | /  [_ |  D  )
+|  |  ||     ||  \_/  ||    _]    |  O  ||  |  ||    _]|    /
+|  |_ ||  _  ||   |   ||   [_     |     ||  :  ||   [_ |    \
+|     ||  |  ||   |   ||     |    |     | \   / |     ||  .  \
+|___,_||__|__||___|___||_____|     \___/   \_/  |_____||__|\_|
+
+'''
+    canvas_height, canvas_width = canvas.getmaxyx()
+    max_row = canvas_height - 1
+    max_column = canvas_width - 1
+    first_row = first_column = 0
+    central_row = int(statistics.mean([first_row, max_row]))
+    central_column = int(statistics.mean([first_column, max_column]))
+    game_over_rows, game_over_columns = get_frame_size(game_over_frame)
+    start_row = central_row - game_over_rows / 2
+    start_column = central_column - game_over_columns / 2
+
+    while True:
+        draw_frame(canvas, start_row, start_column, game_over_frame)
+        await asyncio.sleep(0)
+
+
 async def sleep(tics=1):
     for __ in range(tics):
         await asyncio.sleep(0)
@@ -102,6 +128,13 @@ async def animate_spaceship(
         if space_pressed:
             fire_start_column = start_column + rocket_central_column - 1
             coroutines.append(fire(canvas, start_row, fire_start_column, -1))
+
+        for obstacle in obstacles:
+            if obstacle.has_collision(
+                start_row, start_column, rocket_rows, rocket_columns
+            ):
+                coroutines.append(show_gameover(canvas))
+                return
 
 
 async def fire(
@@ -226,7 +259,7 @@ def draw(canvas):
     coroutines.append(
         fill_orbit_with_garbage(canvas, trash_frames, max_column)
     )
-    coroutines.append(show_obstacles(canvas, obstacles))
+
     while True:
         for coroutine in coroutines.copy():
             try:
