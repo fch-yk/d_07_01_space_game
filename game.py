@@ -8,9 +8,9 @@ import time
 from typing import List
 
 from curses_tools import draw_frame, get_frame_size, read_controls
-from game_scenario import PHRASES, get_garbage_delay_tics
 from explosion import explode
-from obstacles import Obstacle, show_obstacles
+from game_scenario import PHRASES, get_garbage_delay_tics
+from obstacles import Obstacle
 from physics import update_speed
 
 coroutines = []
@@ -68,14 +68,22 @@ async def sleep(tics=1):
         await asyncio.sleep(0)
 
 
-async def fill_orbit_with_garbage(canvas, trash_frames, max_column):
+async def fill_orbit_with_garbage(
+    canvas,
+    trash_frames,
+    satellites_frames,
+    max_column
+):
+    obstacles_frames = [*trash_frames]
     while True:
         garbage_delay_tics = get_garbage_delay_tics(year)
         if garbage_delay_tics is None:
             await asyncio.sleep(0)
             continue
+        if year == 1990:
+            obstacles_frames = [*obstacles_frames, *satellites_frames]
         column = random.randint(0, max_column)
-        frame = random.choice(trash_frames)
+        frame = random.choice(obstacles_frames)
         coroutines.append(fly_garbage(canvas, column, frame))
         await sleep(garbage_delay_tics)
 
@@ -217,6 +225,18 @@ async def blink(canvas, row, column, offset_tics, symbol='*'):
         await sleep(3)
 
 
+def get_frames_from_folder(frames_folder_name):
+    frames = []
+    files_names = os.listdir(frames_folder_name)
+    for file_name in files_names:
+        file_path = os.path.join(frames_folder_name, file_name)
+        with open(file_path, 'r') as frame_file:
+            frame = frame_file.read()
+            frames.append(frame)
+
+    return frames
+
+
 def draw(canvas):
     global year
     curses.curs_set(False)
@@ -238,14 +258,8 @@ def draw(canvas):
             for __ in range(2):
                 rocket_frames.append(frame)
 
-    trash_frames = []
-    frames_folder_name = 'frames/trash'
-    files_names = os.listdir(frames_folder_name)
-    for file_name in files_names:
-        file_path = os.path.join(frames_folder_name, file_name)
-        with open(file_path, 'r') as frame_file:
-            frame = frame_file.read()
-            trash_frames.append(frame)
+    trash_frames = get_frames_from_folder('frames/trash')
+    satellites_frames = get_frames_from_folder('frames/satellites')
 
     first_row = first_column = 0
     central_row = int(statistics.mean([first_row, max_row]))
@@ -283,7 +297,12 @@ def draw(canvas):
     )
 
     coroutines.append(
-        fill_orbit_with_garbage(canvas, trash_frames, max_column)
+        fill_orbit_with_garbage(
+            canvas,
+            trash_frames,
+            satellites_frames,
+            max_column
+        )
     )
 
     coroutines.append(show_title(canvas))

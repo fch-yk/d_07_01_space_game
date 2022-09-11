@@ -1,6 +1,6 @@
 # Space game
 
-A spaceship flies  surrounded by blinking stars.
+A spaceship flies surrounded by blinking stars.
 
 ## Prerequisites
 
@@ -20,7 +20,8 @@ A spaceship flies  surrounded by blinking stars.
 python game.py
 ```
 
-- Control the spaceship with the arrows.
+- Control the spaceship with the arrows. Avoid crash with garbage;
+- There will be a counter of passing years in the lower right corner. Since 2020 you can shoot the garbage with a gun (use the space key).
 
 ## Project goals
 
