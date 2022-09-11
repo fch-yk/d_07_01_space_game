@@ -8,6 +8,7 @@ import time
 from typing import List
 
 from curses_tools import draw_frame, get_frame_size, read_controls
+from game_scenario import PHRASES, get_garbage_delay_tics
 from explosion import explode
 from obstacles import Obstacle, show_obstacles
 from physics import update_speed
@@ -15,6 +16,25 @@ from physics import update_speed
 coroutines = []
 obstacles: List[Obstacle] = []
 obstacles_in_last_collisions: List[Obstacle] = []
+year = 1957
+
+
+async def show_title(canvas):
+    phrase = ''
+    canvas_height, canvas_width = canvas.getmaxyx()
+    title_max_length = 50
+    start_row = canvas_height - 1
+    start_column = canvas_width - title_max_length
+
+    title_window = canvas.derwin(start_row, start_column)
+    while True:
+        if year in PHRASES:
+            phrase = PHRASES[year]
+        title = f'Year {year} {phrase}'
+        draw_frame(title_window, 0, 0, title)
+        title_window.refresh()
+        await asyncio.sleep(0)
+        draw_frame(title_window, 0, 0, title, True)
 
 
 async def show_gameover(canvas):
@@ -50,10 +70,14 @@ async def sleep(tics=1):
 
 async def fill_orbit_with_garbage(canvas, trash_frames, max_column):
     while True:
+        garbage_delay_tics = get_garbage_delay_tics(year)
+        if garbage_delay_tics is None:
+            await asyncio.sleep(0)
+            continue
         column = random.randint(0, max_column)
         frame = random.choice(trash_frames)
         coroutines.append(fly_garbage(canvas, column, frame))
-        await sleep(10)
+        await sleep(garbage_delay_tics)
 
 
 async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
@@ -98,6 +122,7 @@ async def animate_spaceship(
     )
 
     row_speed = column_speed = 0
+    gun_appearance_year = 2020
 
     for rocket_frame in itertools.cycle(rocket_frames):
         draw_frame(canvas, start_row, start_column, rocket_frame)
@@ -125,7 +150,7 @@ async def animate_spaceship(
         start_column = max(start_column, 1)
         start_column = min(start_column, max_rocket_column)
 
-        if space_pressed:
+        if space_pressed and year >= gun_appearance_year:
             fire_start_column = start_column + rocket_central_column - 1
             coroutines.append(fire(canvas, start_row, fire_start_column, -1))
 
@@ -193,6 +218,7 @@ async def blink(canvas, row, column, offset_tics, symbol='*'):
 
 
 def draw(canvas):
+    global year
     curses.curs_set(False)
     canvas.nodelay(True)
 
@@ -260,6 +286,10 @@ def draw(canvas):
         fill_orbit_with_garbage(canvas, trash_frames, max_column)
     )
 
+    coroutines.append(show_title(canvas))
+
+    year_tics = 0
+    year_duration = 15
     while True:
         for coroutine in coroutines.copy():
             try:
@@ -269,6 +299,10 @@ def draw(canvas):
 
         canvas.refresh()
         time.sleep(0.1)
+        year_tics += 1
+        if year_tics == year_duration:
+            year_tics = 0
+            year += 1
 
 
 if __name__ == '__main__':
