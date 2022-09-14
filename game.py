@@ -69,7 +69,7 @@ async def show_gameover(canvas):
 
 
 async def sleep(tics=1):
-    for __ in range(tics):
+    for _ in range(tics):
         await asyncio.sleep(0)
 
 
@@ -263,7 +263,7 @@ def draw(canvas):
         file_path = os.path.join(frames_folder_name, file_name)
         with open(file_path, 'r') as frame_file:
             frame = frame_file.read()
-            for __ in range(2):
+            for _ in range(2):
                 rocket_frames.append(frame)
 
     trash_frames = get_frames_from_folder('frames/trash')
@@ -284,7 +284,7 @@ def draw(canvas):
     min_game_area_row = min_game_area_column = 1
     max_game_area_row = max_row - 1
     max_game_area_column = max_column - 1
-    for __ in range(stars_number):
+    for _ in range(stars_number):
         row = random.randint(min_game_area_row, max_game_area_row)
         column = random.randint(min_game_area_column, max_game_area_column)
         symbol = random.choice('+*.:')
