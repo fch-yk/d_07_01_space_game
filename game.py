@@ -86,7 +86,7 @@ async def fill_orbit_with_garbage(
             await asyncio.sleep(0)
             continue
         if year == 1990:
-            obstacles_frames = [*obstacles_frames, *satellites_frames]
+            obstacles_frames += satellites_frames
         column = random.randint(0, max_column)
         frame = random.choice(obstacles_frames)
         coroutines.append(fly_garbage(canvas, column, frame))
@@ -105,21 +105,24 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
     rows_size, columns_size = get_frame_size(garbage_frame)
     row = 0
     center_column = round(column + columns_size / 2)
-    obstacle = None
+    obstacle = Obstacle(row, column, rows_size, columns_size)
+    obstacles.append(obstacle)
 
     while row < rows_number:
         if obstacle in obstacles_in_last_collisions:
             obstacles_in_last_collisions.remove(obstacle)
             center_row = round(row + rows_size / 2)
             coroutines.append(explode(canvas, center_row, center_column))
-            return
+            break
+
         draw_frame(canvas, row, column, garbage_frame)
-        obstacle = Obstacle(row, column, rows_size, columns_size)
-        obstacles.append(obstacle)
+
         await asyncio.sleep(0)
         draw_frame(canvas, row, column, garbage_frame, negative=True)
-        obstacles.remove(obstacle)
         row += speed
+        obstacle.row = row
+
+    obstacles.remove(obstacle)
 
 
 async def animate_spaceship(
