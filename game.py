@@ -82,7 +82,7 @@ async def fill_orbit_with_garbage(
     obstacles_frames = [*trash_frames]
     while True:
         garbage_delay_tics = get_garbage_delay_tics(year)
-        if garbage_delay_tics is None:
+        if not garbage_delay_tics:
             await asyncio.sleep(0)
             continue
         if year == 1990:
