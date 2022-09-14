@@ -22,6 +22,8 @@ year = 1957
 
 async def show_title(canvas):
     phrase = ''
+    '''Method getmaxyx returns height and width:
+    https://docs.python.org/2/library/curses.html#curses.window.getmaxyx)'''
     canvas_height, canvas_width = canvas.getmaxyx()
     title_max_length = 50
     start_row = canvas_height - 1
@@ -49,6 +51,8 @@ async def show_gameover(canvas):
     |___,_||__|__||___|___||_____|     \___/   \_/  |_____||__|\_|
     '''
     game_over_frame = dedent(game_over_frame)
+    '''Method getmaxyx returns height and width:
+    https://docs.python.org/2/library/curses.html#curses.window.getmaxyx)'''
     canvas_height, canvas_width = canvas.getmaxyx()
     max_row = canvas_height - 1
     max_column = canvas_width - 1
@@ -92,6 +96,8 @@ async def fill_orbit_with_garbage(
 async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
     """Animate garbage, flying from top to bottom.
     Сolumn position will stay same, as specified on start."""
+    '''Method getmaxyx returns height and width:
+    https://docs.python.org/2/library/curses.html#curses.window.getmaxyx)'''
     rows_number, columns_number = canvas.getmaxyx()
 
     column = max(column, 0)
@@ -193,7 +199,8 @@ async def fire(
     column += columns_speed
 
     symbol = '-' if columns_speed else '|'
-
+    '''Method getmaxyx returns height and width:
+    https://docs.python.org/2/library/curses.html#curses.window.getmaxyx)'''
     rows, columns = canvas.getmaxyx()
     max_row, max_column = rows - 1, columns - 1
 
