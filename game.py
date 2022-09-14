@@ -5,6 +5,7 @@ import os
 import random
 import statistics
 import time
+from textwrap import dedent
 from typing import List
 
 from curses_tools import draw_frame, get_frame_size, read_controls
@@ -39,15 +40,15 @@ async def show_title(canvas):
 
 async def show_gameover(canvas):
     game_over_frame = r'''
-  ____   ____  ___ ___    ___       ___   __ __    ___  ____
- /    | /    ||   |   |  /  _]     /   \ |  |  |  /  _]|    \
-|   __||  o  || _   _ | /  [_     |     ||  |  | /  [_ |  D  )
-|  |  ||     ||  \_/  ||    _]    |  O  ||  |  ||    _]|    /
-|  |_ ||  _  ||   |   ||   [_     |     ||  :  ||   [_ |    \
-|     ||  |  ||   |   ||     |    |     | \   / |     ||  .  \
-|___,_||__|__||___|___||_____|     \___/   \_/  |_____||__|\_|
-
-'''
+      ____   ____  ___ ___    ___       ___   __ __    ___  ____
+     /    | /    ||   |   |  /  _]     /   \ |  |  |  /  _]|    \
+    |   __||  o  || _   _ | /  [_     |     ||  |  | /  [_ |  D  )
+    |  |  ||     ||  \_/  ||    _]    |  O  ||  |  ||    _]|    /
+    |  |_ ||  _  ||   |   ||   [_     |     ||  :  ||   [_ |    \
+    |     ||  |  ||   |   ||     |    |     | \   / |     ||  .  \
+    |___,_||__|__||___|___||_____|     \___/   \_/  |_____||__|\_|
+    '''
+    game_over_frame = dedent(game_over_frame)
     canvas_height, canvas_width = canvas.getmaxyx()
     max_row = canvas_height - 1
     max_column = canvas_width - 1
