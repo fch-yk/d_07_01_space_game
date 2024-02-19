@@ -2,6 +2,8 @@
 
 A spaceship flies surrounded by blinking stars.
 
+![space game](screenshots/space_game.gif)
+
 ## Prerequisites
 
 - Linux operating system;
